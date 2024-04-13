@@ -1,18 +1,16 @@
 #ifndef DEFS_H
 #define DEFS_H
 
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <math.h>
-#include <string.h>
+#include <iostream>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_image.h>
 #include <SDL3/SDL_ttf.h>
 #include "SDL3/SDL_keyboard.h"
 #include "SDL3/SDL_keycode.h"
 #include "SDL3/SDL_render.h"
+#include "imgui.h"
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_sdlrenderer3.h"
 
 #ifdef _WIN32
 #define CLEAR_SCREEN system("cls")
@@ -25,8 +23,8 @@
 #define DEG_TO_RAD(x) (x * PI) / 180.0f
 #define RAD_TO_DEG(x) (x * 180.0f) / PI
 #define sgn(x) (x < 0) ? -1 : (x > 0)// ? 1 : 0
-#define WIN_WIDTH   1280
-#define WIN_HEIGHT  720
+#define WIN_WIDTH  1280 
+#define WIN_HEIGHT 720
 #define ASPECT_RATIO (f32)WIN_WIDTH/WIN_HEIGHT
 #define ORTHO_PROJECTION_MAT {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 0.0}}
 
@@ -60,6 +58,8 @@ typedef enum {
 } axis;
 
 typedef enum {
+    POINT2D,
+    POINT3D,
     LINE,
     TRIANGLE,
     CUBE,

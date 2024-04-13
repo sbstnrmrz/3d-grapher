@@ -194,28 +194,40 @@ void rotate(void *data, shape shape, f64 angle, axis axis) {
     size_t p_size = 0;
     pointf3d_t *p = NULL;
     switch (shape) {
+    case POINT3D:
+        p_size = 1;
+        p = (pointf3d_t*)malloc(p_size * sizeof(pointf3d_t));
+        for (size_t i = 0; i < p_size; i++) {
+            p[i] = ((pointf3d_t*)data)[i];
+        }
+        break;
     case LINE:
         p_size = 2;
-        p = malloc(p_size * sizeof(triangle_t));
+        p = (pointf3d_t*)malloc(p_size * sizeof(pointf3d_t));
         for (size_t i = 0; i < p_size; i++) {
             p[i] = ((pointf3d_t*)data)[i];
         }
         break;
     case TRIANGLE:
         p_size = 3;
-        p = malloc(p_size * sizeof(triangle_t));
+        p = (pointf3d_t*)malloc(p_size * sizeof(triangle_t));
         for (size_t i = 0; i < p_size; i++) {
             p[i] = ((triangle_t*)data)->point[i];
         }
         break;
     case CUBE:
         p_size = 8;
-        p = malloc(p_size * sizeof(cube_t));
+        p = (pointf3d_t*)malloc(p_size * sizeof(cube_t));
         for (size_t i = 0; i < p_size; i++) {
             p[i] = ((cube_t*)data)->point[i];
         }
         break;
     case CIRCLE:
+        p_size = 1;
+        p = (pointf3d_t*)malloc(p_size * sizeof(pointf3d_t));
+        for (size_t i = 0; i < p_size; i++) {
+            p[i] = ((pointf3d_t*)data)[i];
+        }
         break;
     default:
         break;
@@ -235,8 +247,8 @@ void rotate(void *data, shape shape, f64 angle, axis axis) {
             tmp.z = p[i].x * sinang + p[i].z * cosang;
             break;
         case AXIS_Z: 
-            tmp.x = p[i].x * cosang + p[i].y * sinang;
-            tmp.y = p[i].y * cosang - p[i].x * sinang;
+            tmp.x = (p[i].x * cosang + p[i].y * sinang);
+            tmp.y = (p[i].y * cosang - p[i].x * sinang);
             tmp.z = ((pointf3d_t*)data)[i].z;
             break;
         default:
@@ -248,6 +260,9 @@ void rotate(void *data, shape shape, f64 angle, axis axis) {
         }
         if (shape == CUBE) {
             ((cube_t*)data)->point[i] = tmp;
+        }
+        if (shape == CIRCLE) {
+            ((pointf3d_t*)data)[i] = tmp;
         }
     }
     free(p);
@@ -283,7 +298,7 @@ void project_cube(cube_t *cube) {
     f32 znear = -30.0f;
     f32 zfar = 30.0f;
 
-    f64 ortho[3][3] = ORTHO_PROJECTION_MAT;
+    const f64 ortho[3][3] = ORTHO_PROJECTION_MAT;
 
     for (size_t i = 0; i < 8; i++) {
         p[i].x = cube->point[i].x;
@@ -291,13 +306,13 @@ void project_cube(cube_t *cube) {
         p[i].z = cube->point[i].z;
         p[i].w = 1;
 
-        const f64 _perspective_projection_matrix[4][4] = {
+        f64 _perspective_projection_matrix[4][4] = {
             {x, 0, 0, 0},
             {0, y, 0, 0},
             {0, 0, (-zfar-znear)/(znear-zfar), (2*zfar*znear)/(znear-zfar)},
             {0, 0, 1, 0},
         };
-        const f64 __perspective_projection_matrix[4][4] = {
+        f64 __perspective_projection_matrix[4][4] = {
             {x, 0, 0, 0},
             {0, y, 0, 0},
             {0, 0, (zfar)/(zfar-znear), 1},
@@ -314,8 +329,16 @@ void project_cube(cube_t *cube) {
 }
 
 void project_circle(circle_t *circle) {
-    for (size_t i = 0; i < 2; i++) {
+    for (size_t i = 0; i < 1; i++) {
 //        mat_mul_3x3(circle->radius, ortho_projection_mat);
+    }
+
+}
+
+void project_point(pointf3d_t *point) {
+    f64 ortho[3][3] = ORTHO_PROJECTION_MAT;
+    for (size_t i = 0; i < 1; i++) {
+        mat_mul_3x3(point, ortho);
     }
 
 }
@@ -325,12 +348,18 @@ void project_circle(circle_t *circle) {
 
 
 pointf3d_t normalize_point(pointf3d_t point) {
-    return (pointf3d_t) {.x = ((point.x*30) + (f32)WIN_WIDTH/2), 
-                         .y = ((point.y*30) + (f32)WIN_HEIGHT/2),
-                         .z = (point.z*30 + 0)};
+    return (pointf3d_t) {
+               .x = ((point.x*30) + (f32)WIN_WIDTH/2), 
+               .y = ((point.y*30) + (f32)WIN_HEIGHT/2),
+               .z = (point.z*30 + 0)
+           };
 }
 
-
+void _normalize_point(pointf3d_t *point) {
+    point->x = point->x*30 + (f32)WIN_WIDTH/2; 
+    point->y = point->y*30 + (f32)WIN_HEIGHT/2;
+    point->z = point->z*30 + 0;
+}
 
 void render_triangle(SDL_Renderer *renderer, triangle_t triangle) {
     pointf3d_t p[3] = {0};
@@ -476,7 +505,74 @@ void render_cube(SDL_Renderer *renderer, cube_t cube) {
     }
 }
 
-void render_circle(SDL_Renderer *renderer, circle_t circle) {
+void render_circle(SDL_Renderer *renderer, circle_t circle, f64 angle) {
+    f32 x = circle.radius * 30;
+    f32 y = 0;
+    f32 err = 0;
+
+    pointf3d_t pc = {
+        .x = circle.center.x, 
+        .y = circle.center.y,
+        .z = 0
+    };
+
+    pointf3d_t *result = NULL;
+    size_t cnt = 0;
+
+    while (x >= y) {
+        pointf3d_t r = {x*30, y, 0};
+//      rotate(&r, POINT3D, angle, AXIS_X);
+//      project_point(&r);
+
+        pointf3d_t p[8] = {0};
+        p[0].x = pc.x + x;
+        p[1].x = pc.x + y;
+        p[2].x = pc.x - y;
+        p[3].x = pc.x - x;
+        p[4].x = pc.x - x;
+        p[5].x = pc.x - y;
+        p[6].x = pc.x + y;
+        p[7].x = pc.x + x;
+
+        p[0].y = pc.y + y;
+        p[1].y = pc.y + x;
+        p[2].y = pc.y + x;
+        p[3].y = pc.y + y;
+        p[4].y = pc.y - y;
+        p[5].y = pc.y - x;
+        p[6].y = pc.y - x;
+        p[7].y = pc.y - y;
+
+        for (size_t i = 0; i < 8; i++) {
+            SDL_RenderPoint(renderer, WIN_WIDTH/2 + p[i].x, WIN_HEIGHT/2 - p[i].y);
+            printf("p[%zu] = x: %.2f | y: %.2f\n", i, p[i].x, p[i].y);
+        }
+
+        if (err <= 0) {
+            y += 1;
+            err += 2*y + 1;
+        }
+
+        if (err > 0) {
+            x -= 1;
+            err -= 2*x + 1;
+        }
+        for (size_t i = 0; i < 8; i++) {
+            result = (pointf3d_t*)realloc(result, sizeof(pointf3d_t) * (cnt+1));
+            result[cnt] = p[i];
+        }
+        cnt++;
+    }
+
+    for (size_t i = 0; i < cnt; i++) {
+//      rotate(&result[i], POINT3D, angle, AXIS_X);
+        project_point(&result[i]);
+
+//        pointf3d_t po = normalize_point(result[i]);
+        SDL_RenderPoint(renderer, (WIN_WIDTH/2) + result[i].x, (WIN_HEIGHT/2) - result[i].y);
+    }
+
+    free(result);
 }
 
 
