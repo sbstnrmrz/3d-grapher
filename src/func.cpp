@@ -25,7 +25,7 @@ void mat_mul_3x3(pointf3d_t *p, f64 (*matrix)[3]) {
     p->z = tmp_point.z;
 } 
 
-void rotate_line(pointf3d_t *line, f64 angle, axis axis) {
+void rotate_line(line_t line, f64 angle, axis axis) {
     f64 cosang = cos(angle);
     f64 sinang = sin(angle);
 
@@ -49,22 +49,22 @@ void rotate_line(pointf3d_t *line, f64 angle, axis axis) {
         pointf3d_t tmp = {0};
         switch (axis) {
         case AXIS_X:
-            tmp.y = line[i].y * cosang + line[i].z * sinang;
-            tmp.z = line[i].z * cosang - line[i].y * sinang;
-            line[i].y = tmp.y;
-            line[i].z = tmp.z;
+            tmp.y = line.p[i].y * cosang + line.p[i].z * sinang;
+            tmp.z = line.p[i].z * cosang - line.p[i].y * sinang;
+            line.p[i].y = tmp.y;
+            line.p[i].z = tmp.z;
             break;
         case AXIS_Y:
-            tmp.x = line[i].x * cosang - line[i].z * sinang;
-            tmp.z = line[i].x * sinang + line[i].z * cosang;
-            line[i].x = tmp.x;
-            line[i].z = tmp.z;
+            tmp.x = line.p[i].x * cosang - line.p[i].z * sinang;
+            tmp.z = line.p[i].x * sinang + line.p[i].z * cosang;
+            line.p[i].x = tmp.x;
+            line.p[i].z = tmp.z;
             break;
         case AXIS_Z:
-            tmp.x = line[i].x * cosang + line[i].y * sinang;
-            tmp.y = line[i].y * cosang - line[i].x * sinang;
-            line[i].x = tmp.x;
-            line[i].y = tmp.y;
+            tmp.x = line.p[i].x * cosang + line.p[i].y * sinang;
+            tmp.y = line.p[i].y * cosang - line.p[i].x * sinang;
+            line.p[i].x = tmp.x;
+            line.p[i].y = tmp.y;
             break;
         default:
             printf("Invalid axis\n");
@@ -202,7 +202,7 @@ void rotate(void *data, shape shape, f64 angle, axis axis) {
         break;
     case LINE:
         p_size = 2;
-        p = (pointf3d_t*)malloc(p_size * sizeof(pointf3d_t));
+        p = (pointf3d_t*)malloc(sizeof(line_t));
         for (size_t i = 0; i < p_size; i++) {
             p[i] = ((pointf3d_t*)data)[i];
         }
@@ -254,6 +254,9 @@ void rotate(void *data, shape shape, f64 angle, axis axis) {
             printf("Invalid axis\n");
             break;
         }
+        if (shape == LINE) {
+            ((line_t*)data)->p[i] = tmp;
+        }
         if (shape == TRIANGLE) {
             ((triangle_t*)data)->point[i] = tmp;
         }
@@ -267,10 +270,10 @@ void rotate(void *data, shape shape, f64 angle, axis axis) {
     free(p);
 }
 
-void project_line(pointf3d_t line[2]) {
+void project_line(line_t line) {
     f64 ortho[3][3] = ORTHO_PROJECTION_MAT;
     for (size_t i = 0; i < 2; i++) {
-        mat_mul_3x3(&line[i], ortho);
+        mat_mul_3x3(&line.p[i], ortho);
     }
 
 }
@@ -545,7 +548,7 @@ void render_circle(SDL_Renderer *renderer, circle_t circle, f64 angle) {
         p[7].y = pc.y - y;
 
         for (size_t i = 0; i < 8; i++) {
-            SDL_RenderPoint(renderer, WIN_WIDTH/2 + p[i].x, WIN_HEIGHT/2 - p[i].y);
+            SDL_RenderPoint(renderer, (f32)WIN_WIDTH/2 + p[i].x, (f32)WIN_HEIGHT/2 - p[i].y);
             printf("p[%zu] = x: %.2f | y: %.2f\n", i, p[i].x, p[i].y);
         }
 
@@ -570,7 +573,7 @@ void render_circle(SDL_Renderer *renderer, circle_t circle, f64 angle) {
         project_point(&result[i]);
 
 //        pointf3d_t po = normalize_point(result[i]);
-        SDL_RenderPoint(renderer, (WIN_WIDTH/2) + result[i].x, (WIN_HEIGHT/2) - result[i].y);
+        SDL_RenderPoint(renderer, ((f32)WIN_WIDTH/2) + result[i].x, ((f32)WIN_HEIGHT/2) - result[i].y);
     }
 
     free(result);

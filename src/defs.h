@@ -79,6 +79,13 @@ typedef struct {
 } v3;
 
 typedef struct {
+    i32 x;
+    i32 y;
+    i32 z;
+    i32 w;
+} v4;
+
+typedef struct {
     f32 x;
     f32 y;
 } vf2;
@@ -88,6 +95,13 @@ typedef struct {
     f32 y;
     f32 z;
 } vf3;
+
+typedef struct {
+    f32 x;
+    f32 y;
+    f32 z;
+    f32 w;
+} vf4;
 
 typedef struct {
     f32 x;
@@ -122,7 +136,7 @@ typedef struct {
 } cube_t;
 
 typedef struct {
-    vf3 p[2];
+    pointf3d_t p[2];
 } line_t;
 
 typedef struct {

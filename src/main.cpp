@@ -10,6 +10,7 @@ struct {
 ImGuiIO io;
 f32 ip[2] = {0};
 f32 scale = 30;
+f64 angle = 0;
 f64 x_ang = 0.00f;
 f64 y_ang = 0.00f;
 f64 z_ang = 0.00f;
@@ -19,6 +20,10 @@ bool show_coord_lines = true;
 bool ax = false;
 bool ay = false;
 bool az = false;
+line_t line = {
+    -3, 0, 0,
+    3, 0, 0
+};
 
 pointf3d_t camera = {
     0, 0, 0  
@@ -91,11 +96,6 @@ circle_t circle = {
 
 static f64 dist = 2.5;
 
-pointf3d_t line[2] = {
-    {0, 0, 0},
-    {10, 0, 0}
-};
-
 struct {
     pointf2d_t pos;
     pointf2d_t last_pos;
@@ -137,11 +137,11 @@ void render_axis(SDL_Renderer *renderer, f32 scale) {
         .y = 0,
         .z = 100
     };
-    pointf3d_t x[2] = {
+    line_t x = {
         x1,
         x2
     };
-    project_line(x);
+    project_line(line);
 
 
 
@@ -149,7 +149,7 @@ void render_axis(SDL_Renderer *renderer, f32 scale) {
 //  SDL_RenderLine(renderer, y1.x, y1.y, y2.x, y2.y);
 //  SDL_RenderLine(renderer, z1.x, z1.y, z2.x, z2.y);
 
-    SDL_RenderLine(renderer, x[0].x, x[0].y, x[1].x, x[1].y);
+    SDL_RenderLine(renderer, x.p[0].x, x.p[0].y, x.p[1].x, x.p[1].y);
     SDL_RenderLine(renderer, y1.x, y1.y, y2.x, y2.y);
     SDL_RenderLine(renderer, z1.x, z1.y, z2.x, z2.y);
 
@@ -493,19 +493,17 @@ void render() {
  // }
 
 // LINE
-//  SDL_SetRenderDrawColor(sdl.renderer, COLOR_WHITE.r, COLOR_WHITE.g, COLOR_WHITE.b, COLOR_WHITE.a);
-//  pointf3d_t l[2];
-//  l[0] = line[0];
-//  l[1] = line[1];
+    SDL_SetRenderDrawColor(sdl.renderer, COLOR_WHITE.r, COLOR_WHITE.g, COLOR_WHITE.b, COLOR_WHITE.a);
+    line_t l = line;
 
-//  rotate_line(l, angle, AXIS_Z);
-//  project_line(l);
-//  
-//  for (size_t i = 0; i < 2; i++) {
-//      l[i] = normalize_point(l[i]);
-//  }
+    rotate(&l, LINE, angle, AXIS_Z);
+    project_line(l);
+    
+    for (size_t i = 0; i < 2; i++) {
+        _normalize_point(&l.p[i]);
+    };
 
-//  SDL_RenderLine(sdl.renderer, l[0].x, l[0].y, l[1].x, l[1].y);
+    SDL_RenderLine(sdl.renderer, l.p[0].x, l.p[0].y, l.p[1].x, l.p[1].y);
 
     for (f32 i = -100; i < 100; i += 0.20) {
         pointf2d_t p {
@@ -515,6 +513,9 @@ void render() {
         normalize_point2d(&p, scale);
         SDL_RenderPoint(sdl.renderer, p.x, p.y);
     }
+    printf("ang: %f\n", angle);
+    angle += 0.02;
+    
 
     ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData());
     SDL_RenderPresent(sdl.renderer);
