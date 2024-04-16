@@ -32,6 +32,7 @@
 //  2023-02-07: Forked "imgui_impl_sdl2" into "imgui_impl_sdl3". Removed version checks for old feature. Refer to imgui_impl_sdl2.cpp for older changelog.
 
 #include "imgui.h"
+#include <SDL3/SDL_keyboard.h>
 #ifndef IMGUI_DISABLE
 #include "imgui_impl_sdl3.h"
 
@@ -117,6 +118,9 @@ static void ImGui_ImplSDL3_SetPlatformImeData(ImGuiViewport*, ImGuiPlatformImeDa
         r.w = 1;
         r.h = (int)data->InputLineHeight;
         SDL_SetTextInputRect(&r);
+        SDL_StartTextInput();
+    } else {
+        SDL_StopTextInput();
     }
 }
 

@@ -7,13 +7,15 @@ struct {
     bool running;
 } sdl;
 
-bool spin = true;
-f64 angle = 0.00f;
+ImGuiIO io;
+f32 ip[2] = {0};
+f32 scale = 30;
 f64 x_ang = 0.00f;
 f64 y_ang = 0.00f;
 f64 z_ang = 0.00f;
-ImGuiIO io;
-bool show_axis = false;
+bool show_axis = true;
+bool show_cube = false;
+bool show_coord_lines = true;
 bool ax = false;
 bool ay = false;
 bool az = false;
@@ -25,55 +27,55 @@ pointf3d_t camera = {
 const f64 ortho[3][3] = ORTHO_PROJECTION_MAT;
 
 cube_t cube1 = {
-    {-1, -1, -1,
-     1, -1, -1,
-     -1, 1, -1,
-     1, 1, -1,
-     -1, -1, 1,
-     1, -1, 1,
-     -1, 1, 1,
-     1, 1, 1},
+    {-2, -2, -2,
+      2, -2, -2,
+     -2,  2, -2,
+      2,  2, -2,
+     -2, -2,  2,
+      2, -2,  2,
+     -2,  2,  2,
+      2,  2,  2},
 };
 cube_t cube2 = {
-    {1, -1, -1,
-     3, -1, -1,
-     1, 1, -1,
-     3, 1, -1,
-     1, -1, 1,
-     3, -1, 1,
-     1, 1, 1,
-     3, 1, 1},
+    {2, -2, -2,
+     6, -2, -2,
+     2,  2, -2,
+     6,  2, -2,
+     2, -2,  2,
+     6, -2,  2,
+     2,  2,  2,
+     6,  2,  2},
 };
 cube_t cube3 = {
-    {1, -1, -1,
-     -3, -1, -1,
-     1, 1, -1,
-     -3, 1, -1,
-     1, -1, 1,
-     -3, -1, 1,
-     1, 1, 1,
-     -3, 1, 1},
+    { 2, -2, -2,
+     -6, -2, -2,
+      2,  2, -2,
+     -6,  2, -2,
+      2, -2,  2,
+     -6, -2,  2,
+      2,  2,  2,
+     -6,  2,  2},
 };
 
 cube_t cube4 = {
-    {-1, -3, -1,
-     1, -3, -1,
-     -1, -1, -1,
-     1, -1, -1,
-    -1, -3, 1,
-     1, -3, 1,
-     -1, -1, 1,
-     1, -1, 1}
+    {-2, -6, -2,
+      2, -6, -2,
+     -2, -2, -2,
+      2, -2, -2,
+     -2, -6,  2,
+      2, -6,  2,
+     -2, -2,  2,
+      2, -2,  2}
 };
 cube_t cube5 = {
-    {-1, 1, -1,
-     1, 1, -1,
-     -1, 3, -1,
-     1, 3, -1,
-     -1, 1, 1,
-     1, 1, 1,
-     -1, 3, 1,
-     1, 3, 1,}
+    {-2, 2, -2,
+      2, 2, -2,
+     -2, 6, -2,
+      2, 6, -2,
+     -2, 2,  2,
+      2, 2,  2,
+     -2, 6,  2,
+      2, 6,  2,}
 };
 
 triangle_t tri1 = {
@@ -102,7 +104,7 @@ struct {
     
 } mouse;
 
-void render_axis(SDL_Renderer *renderer) {
+void render_axis(SDL_Renderer *renderer, f32 scale) {
     SDL_SetRenderDrawColor(sdl.renderer, COLOR_WHITE.r, COLOR_WHITE.g, COLOR_WHITE.b, COLOR_WHITE.a);
     static f64 ang = 0;
     pointf3d_t x1 = {
@@ -139,21 +141,80 @@ void render_axis(SDL_Renderer *renderer) {
         x1,
         x2
     };
-//    rotate(x, LINE, ang, AXIS_Z);
-//  rotate_line(x, ang, AXIS_Z);
     project_line(x);
-//    _normalize_point(x);
+
+
+
+//  SDL_RenderLine(renderer, x[0].x, x[0].y, x[1].x, x[1].y);
+//  SDL_RenderLine(renderer, y1.x, y1.y, y2.x, y2.y);
+//  SDL_RenderLine(renderer, z1.x, z1.y, z2.x, z2.y);
 
     SDL_RenderLine(renderer, x[0].x, x[0].y, x[1].x, x[1].y);
     SDL_RenderLine(renderer, y1.x, y1.y, y2.x, y2.y);
     SDL_RenderLine(renderer, z1.x, z1.y, z2.x, z2.y);
 
-//    ang += 0.02;
-
 }
 
 void print_point(pointf3d_t point) {
     printf("(X, Y, Z) %f, %f, %f\n", point.x, point.y, point.z);
+}
+
+void render_coord_lines(SDL_Renderer *renderer, f32 scale) {
+    pointf3d_t coord_line[2] = {
+        {1, 0, 0},
+        {1, 0, 0}
+    };
+
+    project_point(&coord_line[0]);
+    project_point(&coord_line[1]);
+
+    while (normalize_point(coord_line[0], scale).x <= WIN_WIDTH) {
+        pointf3d_t p1 = normalize_point(coord_line[0], scale);
+        pointf3d_t p2 = normalize_point(coord_line[1], scale);
+
+        SDL_RenderLine(renderer, p1.x, p1.y-5, p2.x, p2.y+5);
+        coord_line[0].x++;
+        coord_line[1].x++;
+    }
+
+    coord_line[0].x = -1;
+    coord_line[1].x = -1;
+    while (normalize_point(coord_line[0], scale).x >= 0) {
+        pointf3d_t p1 = normalize_point(coord_line[0], scale);
+        pointf3d_t p2 = normalize_point(coord_line[1], scale);
+
+        SDL_RenderLine(renderer, p1.x, p1.y-5, p2.x, p2.y+5);
+        coord_line[0].x--;
+        coord_line[1].x--;
+    }
+
+    coord_line[0].x = 0;
+    coord_line[1].x = 0;
+    coord_line[0].y = 1;
+    coord_line[1].y = 1;
+    while (normalize_point(coord_line[0], scale).y <= WIN_HEIGHT) {
+        pointf3d_t p1 = normalize_point(coord_line[0], scale);
+        pointf3d_t p2 = normalize_point(coord_line[1], scale);
+
+        SDL_RenderLine(renderer, p1.x-5, p1.y, p2.x+5, p2.y);
+        coord_line[0].y++;
+        coord_line[1].y++;
+    }
+
+    coord_line[0].x = 0;
+    coord_line[1].x = 0;
+    coord_line[0].y = -1;
+    coord_line[1].y = -1;
+    while (normalize_point(coord_line[0], scale).y >= 0) {
+        pointf3d_t p1 = normalize_point(coord_line[0], scale);
+        pointf3d_t p2 = normalize_point(coord_line[1], scale);
+
+        SDL_RenderLine(renderer, p1.x-5, p1.y, p2.x+5, p2.y);
+        coord_line[0].y--;
+        coord_line[1].y--;
+    }
+
+
 }
 
 void print_matrix(const f64 matrix[][3]) {
@@ -216,8 +277,6 @@ void update() {
     SDL_PollEvent(&event);
     const u8 *state = SDL_GetKeyboardState(NULL);
 
-
-
     ImGui_ImplSDL3_ProcessEvent(&event);
     if (event.type == SDL_EVENT_QUIT) {
         sdl.running = false;
@@ -240,15 +299,22 @@ void update() {
         mouse.pressed = false;
     }
 
+    if (event.type == SDL_EVENT_MOUSE_WHEEL) {
+        if (event.wheel.y > 0) {
+            scale += 1;
+        }
+        if (event.wheel.y < 0 && scale > 15) {
+            scale -= 1;
+        }
+    }
+
     if (event.type == SDL_EVENT_KEY_DOWN) {
         if (event.key.keysym.sym == SDLK_z) {
 
         }
 
     } else if (event.type == SDL_EVENT_KEY_UP) {
-        if (event.key.keysym.sym == SDLK_SPACE) {
-            spin = !spin;
-        }
+
     }
     if (state[SDL_SCANCODE_W]) {
         dist -= 0.02;
@@ -275,13 +341,67 @@ void update() {
     ImGui::NewFrame();
 
     ImGui::Begin("Rotation");
-    ImGui::Checkbox("Show axis", &show_axis);
-    ImGui::Checkbox("X axis", &ax);
-    ImGui::Checkbox("Y axis", &ay);
-    ImGui::Checkbox("Z axis", &az);
+    Checkbox("Show axis", &show_axis);
+    Checkbox("Show coord lines", &show_coord_lines);
+    Checkbox("Show cube", &show_cube);
+    if (show_cube) {
+        Checkbox("X axis", &ax);
+        Checkbox("Y axis", &ay);
+        Checkbox("Z axis", &az);
+    } else {
+        ax = ay = az = false;
+    }
+    Text("Scale: %.2f", scale);
+    Text("Angle X: (RAD)%.2f | (DEG)%d", x_ang, (int)(RAD_TO_DEG(x_ang)/200) % 360);
+    Text("Angle Y: (RAD)%.2f | (DEG)%d", y_ang, (int)(RAD_TO_DEG(y_ang)/200) % 360);
+    Text("Angle Z: (RAD)%.2f | (DEG)%d", z_ang, (int)(RAD_TO_DEG(z_ang)/200) % 360);
+
     ImGui::End();
 
+    ImGui::Begin("Mouse info");
+    pointf2d_t m = {
+        .x = (mouse.pos.x - ((f32)WIN_WIDTH/2))/scale,
+        .y = (-mouse.pos.y + ((f32)WIN_HEIGHT/2))/scale,
+    };
+    Text("Mouse X: %.2f", m.x);
+    Text("Mouse Y: %.2f", m.y);
 
+    ImGui::End();
+
+    ImGui::Begin("Cube info");
+    ImGui::Text("Cube vertices:");
+    static char str[128] = {0};
+    static f32 vf3[8][3] = {0};
+    f32 v[3];
+
+
+    for (size_t i = 0; i < 8; i++) {
+        vf3[i][0] = cube1.point[i].x;
+        vf3[i][1] = cube1.point[i].y;
+        vf3[i][2] = cube1.point[i].z;
+    }
+
+    for (size_t i = 0; i < 8; i++) {
+        char buf[32] = {0};
+        snprintf(buf, 32, "V%zu", i);
+        InputFloat3(buf, vf3[i]);
+        cube1.point[i].x = vf3[i][0];
+        cube1.point[i].y = vf3[i][1];
+        cube1.point[i].z = vf3[i][2];
+
+    }
+    Text("%p, %p", vf3[0], vf3[1]);
+
+//  ImGui::InputFloat3("V", vf3[2]);
+//  ImGui::InputFloat3("V", vf3[3]);
+//  ImGui::InputFloat3("V", vf3[4]);
+//  ImGui::InputFloat3("V", vf3[5]);
+//  ImGui::InputFloat3("V", vf3[6]);
+//  ImGui::InputFloat3("V", vf3[7]);
+//      cube1.point[i].x = vf3[i][0];
+//      cube1.point[i].y = vf3[i][1];
+//      cube1.point[i].z = vf3[i][2];
+    ImGui::End();
 }
 
 void render() {
@@ -292,10 +412,11 @@ void render() {
     SDL_SetRenderDrawColor(sdl.renderer, COLOR_WHITE.r, COLOR_WHITE.g, COLOR_WHITE.b, COLOR_WHITE.a);
 
     if (show_axis) {
-        render_axis(sdl.renderer);
+        render_axis(sdl.renderer, scale);
+        if (show_coord_lines) {
+            render_coord_lines(sdl.renderer, scale);
+        }
     }
-
-
     
     pointf2d_t px;
     if (!mouse.pressed) {
@@ -310,53 +431,53 @@ void render() {
 //  if (mouse.pressed && mouse.moving) {
 //      angle = ang;    
 //  }
-      printf("ang: %f\n", ang);
-
-    printf("Pos = %.2f | %.2f\n", ca, co);
 
     SDL_RenderLine(sdl.renderer, WIN_WIDTH/2, WIN_HEIGHT/2, mouse.pos.x, mouse.pos.y);
     SDL_RenderLine(sdl.renderer, mouse.pos.x, WIN_HEIGHT/2, mouse.pos.x, mouse.pos.y);
+    SDL_RenderPoint(sdl.renderer, (WIN_WIDTH/2) + ip[0] * scale, (WIN_HEIGHT/2) - ip[1] * scale);
 
-    cube_t c1 = cube1;
-    if (ax) {
+    if (show_cube) {
+        cube_t c1 = cube1;
+        if (ax) {
+            x_ang += 0.02;
+        } else {
+            //x_ang = 0;
+        }
+        if (ay) {
+            y_ang += 0.02;
+        } else {
+//        y_ang = 0;
+        }
+        if (az) {
+            z_ang += 0.02;
+        } else {
+//        z_ang = 0;
+        }
         rotate(&c1, CUBE, x_ang, AXIS_X);
-        x_ang += 0.02;
-    } else {
-        x_ang = 0;
-    }
-    if (ay) {
         rotate(&c1, CUBE, y_ang, AXIS_Y);
-        y_ang += 0.02;
-    } else {
-        y_ang = 0;
-    }
-    if (az) {
         rotate(&c1, CUBE, z_ang, AXIS_Z);
-        z_ang += 0.02;
-    } else {
-        z_ang = 0;
-    }
 
-    project_cube(&c1);
-    render_cube(sdl.renderer, c1);
+        project_cube(&c1);
+        render_cube(sdl.renderer, c1, scale);
+    }
     
-    f32 sinang = sin(angle);
-    f32 cosang = cos(angle);
-    const f64 x_rotation_matrix[3][3] = {
-        {1, 0, 0},
-        {0, cosang, -sinang},
-        {0, sinang, cosang},
-    };
-    const f64 y_rotation_matrix[3][3] = {
-        {cosang, 0, sinang},
-        {0, 1, 0},
-        {-sinang, 0, cosang},
-    };
-    const f64 z_rotation_matrix[3][3] = {
-        {cosang, -sinang, 0},
-        {sinang, cosang, 0},
-        {0, 0, 1},
-    };
+//  f32 sinang = sin(angle);
+//  f32 cosang = cos(angle);
+//  const f64 x_rotation_matrix[3][3] = {
+//      {1, 0, 0},
+//      {0, cosang, -sinang},
+//      {0, sinang, cosang},
+//  };
+//  const f64 y_rotation_matrix[3][3] = {
+//      {cosang, 0, sinang},
+//      {0, 1, 0},
+//      {-sinang, 0, cosang},
+//  };
+//  const f64 z_rotation_matrix[3][3] = {
+//      {cosang, -sinang, 0},
+//      {sinang, cosang, 0},
+//      {0, 0, 1},
+//  };
  // for (f32 i = 0; i < 100; i += 0.10) {
  //     pointf3d_t p = {
  //         .x = i,
@@ -386,9 +507,15 @@ void render() {
 
 //  SDL_RenderLine(sdl.renderer, l[0].x, l[0].y, l[1].x, l[1].y);
 
-    if (spin) {
-        angle += 0.02;
+    for (f32 i = -100; i < 100; i += 0.20) {
+        pointf2d_t p {
+            .x = i,
+            .y = i * i * i,
+        };
+        normalize_point2d(&p, scale);
+        SDL_RenderPoint(sdl.renderer, p.x, p.y);
     }
+
     ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData());
     SDL_RenderPresent(sdl.renderer);
 }

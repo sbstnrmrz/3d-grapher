@@ -8,9 +8,10 @@
 #include "SDL3/SDL_keyboard.h"
 #include "SDL3/SDL_keycode.h"
 #include "SDL3/SDL_render.h"
-#include "imgui.h"
-#include "imgui_impl_sdl3.h"
-#include "imgui_impl_sdlrenderer3.h"
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_sdl3.h"
+#include "imgui/imgui_impl_sdlrenderer3.h"
+using namespace ImGui;
 
 #ifdef _WIN32
 #define CLEAR_SCREEN system("cls")
@@ -21,7 +22,7 @@
 #define array_len(x) sizeof(x)/sizeof(x[0])
 #define PI atan2f(1, 1) * 4
 #define DEG_TO_RAD(x) (x * PI) / 180.0f
-#define RAD_TO_DEG(x) (x * 180.0f) / PI
+#define RAD_TO_DEG(x) x * (180.0f / PI)
 #define sgn(x) (x < 0) ? -1 : (x > 0)// ? 1 : 0
 #define WIN_WIDTH  1280 
 #define WIN_HEIGHT 720
@@ -69,12 +70,24 @@ typedef enum {
 typedef struct {
     i32 x;
     i32 y;
-} vec2d_t;
+} v2;
+
+typedef struct {
+    i32 x;
+    i32 y;
+    i32 z;
+} v3;
 
 typedef struct {
     f32 x;
     f32 y;
-} vecf2d_t;
+} vf2;
+
+typedef struct {
+    f32 x;
+    f32 y;
+    f32 z;
+} vf3;
 
 typedef struct {
     f32 x;
@@ -107,6 +120,10 @@ typedef struct {
 typedef struct {
     pointf3d_t point[8];
 } cube_t;
+
+typedef struct {
+    vf3 p[2];
+} line_t;
 
 typedef struct {
     f32 radius;
