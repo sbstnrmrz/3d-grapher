@@ -7,7 +7,7 @@ void mat_mul_3x3(pointf3d_t *p, f64 matrix[3][3]);
 void mat_mul_4x4(pointf4d_t *p, f64 matrix[4][4]);
 pointf3d_t normalize_point(pointf3d_t point, f32 scale);
 void normalize_point2d(pointf2d_t *p, f32 scale);
-void _normalize_point(pointf3d_t *point);
+void _normalize_point(pointf3d_t *point, f32 scale);
 void project_line(line_t line);
 void project_triangle(triangle_t *triangle);
 void project_cube(cube_t *cube);

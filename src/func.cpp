@@ -354,10 +354,10 @@ pointf3d_t normalize_point(pointf3d_t point, f32 scale) {
            };
 }
 
-void _normalize_point(pointf3d_t *point) {
-    point->x = point->x*30 + (f32)WIN_WIDTH/2; 
-    point->y = point->y*30 + (f32)WIN_HEIGHT/2;
-    point->z = point->z*30 + 0;
+void _normalize_point(pointf3d_t *point, f32 scale) {
+    point->x = point->x * scale + (f32)WIN_WIDTH/2; 
+    point->y = point->y * scale + (f32)WIN_HEIGHT/2;
+    point->z = point->z * scale + 0;
 }
 
 void normalize_point2d(pointf2d_t *p, f32 scale) {

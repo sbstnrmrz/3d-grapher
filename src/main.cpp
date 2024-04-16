@@ -1,11 +1,18 @@
 #include "defs.h"
 #include "func.h"
+#include <SDL3/SDL_render.h>
 
 struct {
     SDL_Window *window;
     SDL_Renderer *renderer;
     bool running;
 } sdl;
+
+struct {
+    line_t ax;
+    line_t ay;
+    line_t az;
+} axis_lines;
 
 ImGuiIO io;
 f32 ip[2] = {0};
@@ -22,7 +29,7 @@ bool ay = false;
 bool az = false;
 line_t line = {
     -3, 0, 0,
-    3, 0, 0
+    3, -3, 0
 };
 
 pointf3d_t camera = {
@@ -107,15 +114,36 @@ struct {
 void render_axis(SDL_Renderer *renderer, f32 scale) {
     SDL_SetRenderDrawColor(sdl.renderer, COLOR_WHITE.r, COLOR_WHITE.g, COLOR_WHITE.b, COLOR_WHITE.a);
     static f64 ang = 0;
-    pointf3d_t x1 = {
-        .x = 0,
-        .y = WIN_HEIGHT/2,
+    
+    axis_lines.ax.p[0] = (pointf3d_t) {
+        .x = (f32)-WIN_WIDTH/scale,
+        .y = 0,
         .z = 0
     };
-    pointf3d_t x2 = {
-        .x = WIN_WIDTH,
-        .y = WIN_HEIGHT/2,
+    axis_lines.ax.p[1] = (pointf3d_t) {
+        .x = (f32)WIN_WIDTH/scale,
+        .y = 0,
         .z = 0
+    };
+    axis_lines.ay.p[0] = (pointf3d_t) {
+        .x = 0,
+        .y = (f32)-WIN_HEIGHT/scale,
+        .z = 0
+    };
+    axis_lines.ay.p[1] = (pointf3d_t) {
+        .x = 0, 
+        .y = (f32)WIN_HEIGHT/scale,
+        .z = 0
+    };
+    axis_lines.az.p[0] = (pointf3d_t) {
+        .x = 0,
+        .y = 0,
+        .z = -100
+    };
+    axis_lines.az.p[1] = (pointf3d_t) {
+        .x = 0, 
+        .y = 0,
+        .z = 100
     };
     pointf3d_t y1 = {
         .x = WIN_WIDTH/2,
@@ -137,21 +165,53 @@ void render_axis(SDL_Renderer *renderer, f32 scale) {
         .y = 0,
         .z = 100
     };
-    line_t x = {
-        x1,
-        x2
-    };
-    project_line(line);
-
-
+    static f64 a = 0;
+    f64 an = DEG_TO_RAD(45);
+//  rotate(&axis_lines.ax, LINE, a, AXIS_Z);
+//  rotate(&axis_lines.ay, LINE, a, AXIS_Z);
+//  rotate(&axis_lines.ax, LINE, a, AXIS_Y);
+//  rotate(&axis_lines.ay, LINE, a, AXIS_Y);
+    rotate(&axis_lines.ax, LINE, an, AXIS_Z);
+    rotate(&axis_lines.ay, LINE, 0, AXIS_Z);
+    rotate(&axis_lines.az, LINE, an, AXIS_Y);
+    project_line(axis_lines.ax);
+    project_line(axis_lines.ay);
+    project_line(axis_lines.az);
+    _normalize_point(&axis_lines.ax.p[0], scale);
+    _normalize_point(&axis_lines.ax.p[1], scale);
+    _normalize_point(&axis_lines.ay.p[0], scale);
+    _normalize_point(&axis_lines.ay.p[1], scale);
+    _normalize_point(&axis_lines.az.p[0], scale);
+    _normalize_point(&axis_lines.az.p[1], scale);
 
 //  SDL_RenderLine(renderer, x[0].x, x[0].y, x[1].x, x[1].y);
 //  SDL_RenderLine(renderer, y1.x, y1.y, y2.x, y2.y);
 //  SDL_RenderLine(renderer, z1.x, z1.y, z2.x, z2.y);
 
-    SDL_RenderLine(renderer, x.p[0].x, x.p[0].y, x.p[1].x, x.p[1].y);
-    SDL_RenderLine(renderer, y1.x, y1.y, y2.x, y2.y);
-    SDL_RenderLine(renderer, z1.x, z1.y, z2.x, z2.y);
+    SDL_RenderLine(
+        renderer, 
+        axis_lines.ax.p[0].x, 
+        axis_lines.ax.p[0].y, 
+        axis_lines.ax.p[1].x, 
+        axis_lines.ax.p[1].y
+    );
+    SDL_RenderLine(
+        renderer, 
+        axis_lines.ay.p[0].x, 
+        axis_lines.ay.p[0].y, 
+        axis_lines.ay.p[1].x, 
+        axis_lines.ay.p[1].y
+    );
+    SDL_RenderLine(
+        renderer, 
+        axis_lines.az.p[0].x, 
+        axis_lines.az.p[0].y, 
+        axis_lines.az.p[1].x, 
+        axis_lines.az.p[1].y
+    );
+//  SDL_RenderLine(renderer, y1.x, y1.y, y2.x, y2.y);
+//  SDL_RenderLine(renderer, z1.x, z1.y, z2.x, z2.y);
+    a += 0.02;
 
 }
 
@@ -496,11 +556,12 @@ void render() {
     SDL_SetRenderDrawColor(sdl.renderer, COLOR_WHITE.r, COLOR_WHITE.g, COLOR_WHITE.b, COLOR_WHITE.a);
     line_t l = line;
 
-    rotate(&l, LINE, angle, AXIS_Z);
+//    rotate(&l, LINE, angle, AXIS_X);
+    rotate(&l, LINE, angle, AXIS_Y);
     project_line(l);
     
     for (size_t i = 0; i < 2; i++) {
-        _normalize_point(&l.p[i]);
+        _normalize_point(&l.p[i], scale);
     };
 
     SDL_RenderLine(sdl.renderer, l.p[0].x, l.p[0].y, l.p[1].x, l.p[1].y);
