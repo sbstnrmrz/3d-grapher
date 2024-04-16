@@ -10,6 +10,7 @@ void normalize_point2d(pointf2d_t *p, f32 scale);
 void _normalize_point(pointf3d_t *point, f32 scale);
 void project_line(line_t line);
 void project_triangle(triangle_t *triangle);
+void project_rect(rect_t *rect);
 void project_cube(cube_t *cube);
 void project_circle(circle_t *circle);
 void project_point(pointf3d_t *point);
@@ -19,7 +20,9 @@ void rotate_cube(cube_t *cube, f64 angle, axis axis);
 void rotate_circle(circle_t *circle, f64 angle, axis axis);
 void rotate_line(line_t line, f64 angle, axis axis);
 void rotate(void *data, shape shape, f64 angle, axis axis);
+
 void render_triangle(SDL_Renderer *renderer, triangle_t triangle, f32 scale);
+void render_rect(SDL_Renderer *renderer, rect_t rect, f32 scale);
 void render_cube(SDL_Renderer *renderer, cube_t cube, f32 scale);
 void render_circle(SDL_Renderer *renderer, circle_t circle, f64 angle);
 

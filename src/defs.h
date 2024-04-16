@@ -63,6 +63,7 @@ typedef enum {
     POINT3D,
     LINE,
     TRIANGLE,
+    RECTANGLE,
     CUBE,
     CIRCLE
 } shape;
@@ -134,6 +135,10 @@ typedef struct {
 typedef struct {
     pointf3d_t point[8];
 } cube_t;
+
+typedef struct {
+    pointf3d_t p[4];
+} rect_t;
 
 typedef struct {
     pointf3d_t p[2];

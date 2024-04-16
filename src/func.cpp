@@ -3,10 +3,10 @@
 
 void mat_mul_4x4(pointf4d_t *p, f64 matrix[4][4]) {
     pointf4d_t tmp_point = {0};
-    tmp_point.x = ((p->x*matrix[0][0]) + (p->y*matrix[1][0]) + (p->z*matrix[2][0]) + (p->w*matrix[3][0]));
-    tmp_point.y = ((p->x*matrix[0][1]) + (p->y*matrix[1][1]) + (p->z*matrix[2][1]) + (p->w*matrix[3][1]));
-    tmp_point.z = ((p->x*matrix[0][2]) + (p->y*matrix[1][2]) + (p->z*matrix[2][2]) + (p->w*matrix[3][2]));
-    tmp_point.w = ((p->x*matrix[0][3]) + (p->y*matrix[1][3]) + (p->z*matrix[2][3]) + (p->w*matrix[3][3]));
+    tmp_point.x = (p->x*matrix[0][0]) + (p->y*matrix[1][0]) + (p->z*matrix[2][0]) + (p->w*matrix[3][0]);
+    tmp_point.y = (p->x*matrix[0][1]) + (p->y*matrix[1][1]) + (p->z*matrix[2][1]) + (p->w*matrix[3][1]);
+    tmp_point.z = (p->x*matrix[0][2]) + (p->y*matrix[1][2]) + (p->z*matrix[2][2]) + (p->w*matrix[3][2]);
+    tmp_point.w = (p->x*matrix[0][3]) + (p->y*matrix[1][3]) + (p->z*matrix[2][3]) + (p->w*matrix[3][3]);
 
     p->x = tmp_point.x;
     p->y = tmp_point.y;
@@ -14,8 +14,8 @@ void mat_mul_4x4(pointf4d_t *p, f64 matrix[4][4]) {
     p->w = tmp_point.w;
 } 
 
-void mat_mul_3x3(pointf3d_t *p, f64 (*matrix)[3]) {
-    pointf3d_t tmp_point = *p;
+void mat_mul_3x3(pointf3d_t *p, f64 matrix[3][3]) {
+    pointf3d_t tmp_point = {0};
     tmp_point.x = (p->x*matrix[0][0]) + (p->y*matrix[1][0]) + (p->z*matrix[2][0]);
     tmp_point.y = (p->x*matrix[0][1]) + (p->y*matrix[1][1]) + (p->z*matrix[2][1]);
     tmp_point.z = (p->x*matrix[0][2]) + (p->y*matrix[1][2]) + (p->z*matrix[2][2]);
@@ -68,6 +68,13 @@ void rotate(void *data, shape shape, f64 angle, axis axis) {
             p[i] = ((triangle_t*)data)->point[i];
         }
         break;
+    case RECTANGLE:
+        p_size = 4;
+        p = (pointf3d_t*)malloc(p_size * sizeof(triangle_t));
+        for (size_t i = 0; i < p_size; i++) {
+            p[i] = ((rect_t*)data)->p[i];
+        }
+        break;
     case CUBE:
         p_size = 8;
         p = (pointf3d_t*)malloc(p_size * sizeof(cube_t));
@@ -114,6 +121,9 @@ void rotate(void *data, shape shape, f64 angle, axis axis) {
         if (shape == TRIANGLE) {
             ((triangle_t*)data)->point[i] = tmp;
         }
+        if (shape == RECTANGLE) {
+            ((rect_t*)data)->p[i] = tmp;
+        }
         if (shape == CUBE) {
             ((cube_t*)data)->point[i] = tmp;
         }
@@ -143,6 +153,45 @@ void project_triangle(triangle_t *triangle) {
             {0, 0, 1},
         };
         mat_mul_3x3(&triangle->point[i], ortho);
+    }
+}
+
+void project_rect(rect_t *rect) {
+    pointf4d_t p[8] = {0};
+    const f32 fov = 50.0f;
+    f32 x = (1.0f/(ASPECT_RATIO * tan(DEG_TO_RAD(fov/2.0f)))); 
+    f32 y = 1.0f/tan(DEG_TO_RAD(fov/2.0f));
+    f32 znear = -30.0f;
+    f32 zfar = 30.0f;
+
+    f64 ortho[3][3] = ORTHO_PROJECTION_MAT;
+
+    for (size_t i = 0; i < 4; i++) {
+        p[i].x = rect->p[i].x;
+        p[i].y = rect->p[i].y;
+        p[i].z = rect->p[i].z;
+        p[i].w = 1;
+
+        f64 _perspective_projection_matrix[4][4] = {
+            {x, 0, 0, 0},
+            {0, y, 0, 0},
+            {0, 0, (-zfar-znear)/(znear-zfar), (2*zfar*znear)/(znear-zfar)},
+            {0, 0, 1, 0},
+        };
+        f64 __perspective_projection_matrix[4][4] = {
+            {x, 0, 0, 0},
+            {0, y, 0, 0},
+            {0, 0, (zfar)/(zfar-znear), 1},
+            {0, 0, (-zfar*znear)/(zfar-znear), 0},
+        };
+
+//      multiply_matrix(&cube->point[i], perspective_projection_matrix);
+        
+        mat_mul_3x3(&rect->p[i], ortho);
+//      mat_mul_4x4(&p[i], _perspective_projection_matrix);
+//      cube->point[i].x = p[i].x;
+//      cube->point[i].y = p[i].y;
+//      cube->point[i].z = p[i].z;
     }
 }
 
@@ -232,10 +281,6 @@ void render_triangle(SDL_Renderer *renderer, triangle_t triangle, f32 scale) {
 
 void render_cube(SDL_Renderer *renderer, cube_t cube, f32 scale) {
     SDL_SetRenderDrawColor(renderer, COLOR_WHITE.r, COLOR_WHITE.g, COLOR_WHITE.b, COLOR_WHITE.a);
-    cube_t norm_cube = {0};
-    for (size_t i = 0; i < 8; i++) {
-        norm_cube.point[i] = normalize_point(cube.point[i], scale);
-    }
     triangle_t trig[12] = {0}; 
 
     trig[0].point[0].x = cube.point[0].x;
@@ -359,6 +404,35 @@ void render_cube(SDL_Renderer *renderer, cube_t cube, f32 scale) {
     trig[11].point[2].z = cube.point[3].z;
 
     for (size_t i = 0; i < 12; i++) {
+        render_triangle(renderer, trig[i], scale);
+    }
+}
+
+void render_rect(SDL_Renderer *renderer, rect_t rect, f32 scale) {
+    SDL_SetRenderDrawColor(renderer, COLOR_WHITE.r, COLOR_WHITE.g, COLOR_WHITE.b, COLOR_WHITE.a);
+
+    triangle_t trig[2] = {0}; 
+    trig[0].point[0].x = rect.p[0].x;
+    trig[0].point[0].y = rect.p[0].y;
+    trig[0].point[0].z = rect.p[0].z;
+    trig[0].point[1].x = rect.p[1].x;
+    trig[0].point[1].y = rect.p[1].y;
+    trig[0].point[1].z = rect.p[1].z;
+    trig[0].point[2].x = rect.p[2].x;
+    trig[0].point[2].y = rect.p[2].y;
+    trig[0].point[2].z = rect.p[2].z;
+
+    trig[1].point[0].x = rect.p[1].x;
+    trig[1].point[0].y = rect.p[1].y;
+    trig[1].point[0].z = rect.p[1].z;
+    trig[1].point[1].x = rect.p[2].x;
+    trig[1].point[1].y = rect.p[2].y;
+    trig[1].point[1].z = rect.p[2].z;
+    trig[1].point[2].x = rect.p[3].x;
+    trig[1].point[2].y = rect.p[3].y;
+    trig[1].point[2].z = rect.p[3].z;
+
+    for (size_t i = 0; i < 2; i++) {
         render_triangle(renderer, trig[i], scale);
     }
 }

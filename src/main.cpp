@@ -542,9 +542,29 @@ void render() {
         normalize_point2d(&p, scale);
         SDL_RenderPoint(sdl.renderer, p.x, p.y);
     }
-    printf("ang: %f\n", angle);
-    angle += 0.02;
+    rect_t r = {0};
+    r.p[0].x = -1;
+    r.p[0].y = -1;
+    r.p[0].z = 0;
+
+    r.p[1].x = 1;
+    r.p[1].y = -1;
+    r.p[1].z = 0;
     
+    r.p[2].x = -1;
+    r.p[2].y = 1;
+    r.p[2].z = 0;
+
+    r.p[3].x = 1;
+    r.p[3].y = 1;
+    r.p[3].z = 0;
+    rect_t re = r;
+
+    rotate(&re, RECTANGLE, angle, AXIS_X);
+    rotate(&re, RECTANGLE, angle, AXIS_Y);
+    project_rect(&re);
+    render_rect(sdl.renderer, re, scale);
+    angle += 0.02;
 
     ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData());
     SDL_RenderPresent(sdl.renderer);
