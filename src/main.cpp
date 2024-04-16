@@ -145,35 +145,9 @@ void render_axis(SDL_Renderer *renderer, f32 scale) {
         .y = 0,
         .z = 100
     };
-    pointf3d_t y1 = {
-        .x = WIN_WIDTH/2,
-        .y = 0,
-        .z = 0
-    };
-    pointf3d_t y2 = {
-        .x = WIN_WIDTH/2,
-        .y = WIN_HEIGHT,
-        .z = 0
-    };
-    pointf3d_t z1 = {
-        .x = 0,
-        .y = 0,
-        .z = -100
-    };
-    pointf3d_t z2 = {
-        .x = 0,
-        .y = 0,
-        .z = 100
-    };
+
     static f64 a = 0;
     f64 an = DEG_TO_RAD(45);
-//  rotate(&axis_lines.ax, LINE, a, AXIS_Z);
-//  rotate(&axis_lines.ay, LINE, a, AXIS_Z);
-//  rotate(&axis_lines.ax, LINE, a, AXIS_Y);
-//  rotate(&axis_lines.ay, LINE, a, AXIS_Y);
-    rotate(&axis_lines.ax, LINE, an, AXIS_Z);
-    rotate(&axis_lines.ay, LINE, 0, AXIS_Z);
-    rotate(&axis_lines.az, LINE, an, AXIS_Y);
     project_line(axis_lines.ax);
     project_line(axis_lines.ay);
     project_line(axis_lines.az);
@@ -183,10 +157,6 @@ void render_axis(SDL_Renderer *renderer, f32 scale) {
     _normalize_point(&axis_lines.ay.p[1], scale);
     _normalize_point(&axis_lines.az.p[0], scale);
     _normalize_point(&axis_lines.az.p[1], scale);
-
-//  SDL_RenderLine(renderer, x[0].x, x[0].y, x[1].x, x[1].y);
-//  SDL_RenderLine(renderer, y1.x, y1.y, y2.x, y2.y);
-//  SDL_RenderLine(renderer, z1.x, z1.y, z2.x, z2.y);
 
     SDL_RenderLine(
         renderer, 
@@ -209,8 +179,6 @@ void render_axis(SDL_Renderer *renderer, f32 scale) {
         axis_lines.az.p[1].x, 
         axis_lines.az.p[1].y
     );
-//  SDL_RenderLine(renderer, y1.x, y1.y, y2.x, y2.y);
-//  SDL_RenderLine(renderer, z1.x, z1.y, z2.x, z2.y);
     a += 0.02;
 
 }
