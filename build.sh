@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CC="clang++"
-CCFLAGS="-Wall -Wextra -std=c++11"
+CCFLAGS="-std=c++11"
 LIBDIR="-L/usr/local/lib"
 INCLUDEDIR="-I/usr/local/include"
 LIBFLAGS="-lm -lSDL3 -lSDL3_image -lSDL3_ttf"
